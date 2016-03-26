@@ -149,8 +149,9 @@ namespace NUnitTestProject1
 
         private static ExcelFile CreateDataTable(out ExcelWorksheet ws, out DataTable dataTable)
         {
-            var ef = new ExcelFile();
             SpreadsheetInfo.SetLicense("FREE-LIMITED-KEY");
+            var ef = new ExcelFile();
+            
             ws = ef.Worksheets.Add("Card Data");
 
             dataTable = ws.CreateDataTable(new CreateDataTableOptions
