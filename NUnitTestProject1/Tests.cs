@@ -9,7 +9,6 @@ using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
-
 namespace NUnitTestProject1
 {
     [TestFixture]
@@ -49,19 +48,14 @@ namespace NUnitTestProject1
                 reloadAmountList.Add(reload[1]);
             }
 
-            //Go to login page
-            driver.Navigate().GoToUrl(baseUrl);
+            //Login
+            LogIn(driver);
 
-
-            //Enter Email
-            driver.FindElement(By.XPath("//input[@placeholder='Username or email']")).SendKeys(userName);
-            //Enter Pass
-            driver.FindElement(By.XPath("//input[@placeholder='Password']")).SendKeys(userPass);
             //Sign In Button
             driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(10));
 
-            driver.FindElement(By.Id("AT_SignIn_Button")).Click();
-            //Go to Reload Page
+       
+  
             for (var z = 0; z == cardNameList.Count; z++)
             {
                 driver.Navigate()
@@ -79,32 +73,31 @@ namespace NUnitTestProject1
         public void CheckBalances()
 
         {
+
+            ExcelWorksheet ws;
+            DataTable dataTable;
+
             //Grab list of cards
             var cardUrlDict = Data.CreateCarDictionary();
+
             //Initialize Streamwriter
             var sw =
                 new StreamWriter(@"C:\" + DateTime.Today.ToString("h_mm tt MM-dd-yy") +
                                  "cardamounts.txt");
            
             //Setup Excel Sheet and DataTable
-            ExcelWorksheet ws;
-            DataTable dataTable;
-            var ef = CreateDataTable(out ws, out dataTable);
+            var ef = Data.CreateDataTable(out ws, out dataTable);
+
             //Setting up driver
             var driver = new ChromeDriver();
             driver.Manage().Window.Maximize();
             driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(10));
-            //Logging in initially
-            driver.Navigate().GoToUrl(baseUrl);
-            //Enter Email
-            driver.FindElement(By.XPath("//input[@placeholder='Username or email']")).SendKeys(userName);
-            //Enter Pass
-            driver.FindElement(By.XPath("//input[@placeholder='Password']")).SendKeys(userPass);
-            //Sign In Button
-            driver.FindElement(By.Id("AT_SignIn_Button")).Click();
-            //Iteration Counter
-            var z = 0;
 
+            //Login
+            LogIn(driver);
+
+            //set iterator for loop
+            var z = 0;
             //Visit card page and extract data
             foreach (var entry in cardUrlDict)
             {
@@ -147,25 +140,20 @@ namespace NUnitTestProject1
            
         }
 
-        private static ExcelFile CreateDataTable(out ExcelWorksheet ws, out DataTable dataTable)
+        private static void LogIn(ChromeDriver driver)
         {
-            SpreadsheetInfo.SetLicense("FREE-LIMITED-KEY");
-            var ef = new ExcelFile();
-            
-            ws = ef.Worksheets.Add("Card Data");
-
-            dataTable = ws.CreateDataTable(new CreateDataTableOptions
-            {
-                StartRow = 0,
-                StartColumn = 0,
-                NumberOfRows = 0,
-                ExtractDataOptions = ExtractDataOptions.StopAtFirstEmptyRow
-            });
-
-            dataTable.Columns.Add("Card Name");
-            dataTable.Columns.Add("Card Amount");
-            return ef;
+            //Logging in initially
+            driver.Navigate().GoToUrl(baseUrl);
+            //Enter Email
+            driver.FindElement(By.XPath("//input[@placeholder='Username or email']")).SendKeys(userName);
+            //Enter Pass
+            driver.FindElement(By.XPath("//input[@placeholder='Password']")).SendKeys(userPass);
+            //Sign In Button
+            driver.FindElement(By.Id("AT_SignIn_Button")).Click();
+            //Iteration Counter
         }
+
+       
 
         /// <summary>
         ///     transfer.txt setup is cardnametransferfrom:cardnametransferto:amount
@@ -179,27 +167,17 @@ namespace NUnitTestProject1
             var transferDict = File.ReadAllLines("transfer.txt")
                 .Select(x => x.Split(':'));
             //Input Data Lists
-            var cardTransferFrom = new List<string>();
-            var cardTransferTo = new List<string>();
-            var cardTransferAmount = new List<string>();
-            foreach (var transfer in transferDict)
-            {
-                cardTransferFrom.Add(transfer[0]);
-                cardTransferTo.Add(transfer[1]);
-                cardTransferAmount.Add(transfer[2]);
-            }
+            List<string> cardTransferTo;
+            List<string> cardTransferAmount;
+            List<string> cardTransferFrom = Data.GetTransferInfo(transferDict, out cardTransferTo, out cardTransferAmount);
             //Setting up driver
             var driver = new ChromeDriver();
             driver.Manage().Window.Maximize();
             driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(10));
-            //Logging in initially
-            driver.Navigate().GoToUrl(baseUrl);
-            //Enter Email
-            driver.FindElement(By.XPath("//input[@placeholder='Username or email']")).SendKeys(userName);
-            //Enter Pass
-            driver.FindElement(By.XPath("//input[@placeholder='Password']")).SendKeys(userPass);
-            //Sign In Button
-            driver.FindElement(By.Id("AT_SignIn_Button")).Click();
+
+            //Login
+            LogIn(driver);
+
             //initiate sw
             var sw =
                 new StreamWriter(@"C:\" + DateTime.Today.ToString("h_mm tt MM-dd-yy") +
@@ -209,26 +187,39 @@ namespace NUnitTestProject1
             {
                 //Navigate card we will be transferring money from
                 driver.Navigate()
-                    .GoToUrl("https://www.starbucks.com/account/card/transfer/" + cardUrlDict[cardTransferFrom[z]]);
+                    .GoToUrl("https://www.starbucks.com/account/card/transfer/" 
+                    + cardUrlDict[cardTransferFrom[z]]);
+
                 //Click Transfer From Button
                 driver.FindElement(By.Id("TransferFrom")).Click();
+
                 //Setup dropdown and select card to transfer to
                 var carddL = driver.FindElement(By.Id("TransferFrom_ExistingCardId"));
                 var ddl = new SelectElement(carddL);
                 ddl.SelectByValue(cardUrlDict[cardTransferTo[z]]);
+
                 //Click Contingue
                 driver.FindElement(By.XPath("//button[contains(.,'Continue')]")).Click();
+
                 //Enter Transfer Amount
                 driver.FindElement(By.Id("TransferFrom_TransferAmount")).SendKeys(cardTransferAmount[z]);
+
                 //Click Preview Transfer
                 driver.FindElement(By.XPath("//button[contains(.,'Preview My Transfer')]")).Click();
+
                 //Click Complete
                 driver.FindElement(By.XPath("//button[contains(.,'Complete My Transfer')]"));
+
+                //Assert Success
                 Assert.AreEqual(driver.PageSource.Contains("Transfer Complete"), true);
+
+                //Write Results
                 sw.WriteLine("Transferred from: " + cardTransferFrom[z] + " to " + cardTransferTo[z]);
             }
             sw.Close();
         }
+
+        
     }
 }
 
