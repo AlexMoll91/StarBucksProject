@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using GemBox.Spreadsheet;
 
-namespace NUnitTestProject1
+namespace StarbucksAutomation
 {
     public static class Data
     {
