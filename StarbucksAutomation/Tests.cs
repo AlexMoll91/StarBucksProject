@@ -36,7 +36,7 @@ namespace StarbucksAutomation
             var cardNameList = new List<string>();
             var cardUrlDict = CreateCarDictionary();
 
-            var reloadDict = File.ReadAllLines(@"C:\StarBucksAutomation\StarBucksProject-master\StarbucksAutomation\Input\reload.txt").Select(x => x.Split(':')).ToList();
+            var reloadDict = File.ReadAllLines(@"C:\StarBucksAutomation\StarBucksProject\StarbucksAutomation\Input\reload.txt").Select(x => x.Split(':')).ToList();
            
             foreach (var reload in reloadDict)
             {
@@ -46,26 +46,27 @@ namespace StarbucksAutomation
             Console.WriteLine(cardNameList.Count);
             //Login
             LogIn(driver);
-
-            //Sign In Button
-            var z = 0;
-            foreach(var card in cardNameList)
+            //using (StreamWriter newTask = new StreamWriter(@"C:\Users\btmt0_000\Desktop\Balances\ReloadResults.txt", false))
+            using (StreamWriter newTask = new StreamWriter(@"C:\ReloadResults.txt", false))
             {
-                driver.Navigate()
-                    .GoToUrl("https://www.starbucks.com/account/card/reload/choose/" + cardUrlDict[cardNameList[0]]);
-                var jqf = new JQuery(driver);
-                jqf.Find("#Predefined_Reload_Amount > p").Click();
-                driver.FindElement(By.Id("reload_amount")).Clear();
-                driver.FindElement(By.Id("reload_amount")).SendKeys("20");
-                driver.FindElement(By.Id("reload_submit")).Click();
-                String text = (new WebDriverWait(driver, TimeSpan.FromSeconds(10))).Until(d => d.SwitchTo().Alert().Text);
-                Assert.IsTrue(text.Contains("Your balance has been updated to reflect the new amount."));
-                using (StreamWriter sw = File.AppendText(@"C:\StarBucksAutomation\StarBucksProject-master\StarbucksAutomation\Results\reloadresults" + DateTime.Now.ToString("dd-M-yy-HH-mm-ss") +
-                        ".txt"))
+               
+
+                //Sign In Button
+                var z = 0;
+                foreach (var card in cardNameList)
                 {
-                    sw.WriteLine(cardNameList[z] + " successfully loaded with " + reloadAmountList[z] + "$!");
+                    driver.Navigate()
+                        .GoToUrl("https://www.starbucks.com/account/card/reload/choose/" + cardUrlDict[cardNameList[z]]);
+                    var jqf = new JQuery(driver);
+                    jqf.Find("#Predefined_Reload_Amount > p").Click();
+                    driver.FindElement(By.Id("reload_amount")).Clear();
+                    driver.FindElement(By.Id("reload_amount")).SendKeys(reloadAmountList[z]);
+                    driver.FindElement(By.Id("reload_submit")).Click();
+                    WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));
+                    wait.Until(d => driver.PageSource.Contains("Your balance has been updated to reflect the new amount."));
+                    newTask.WriteLine(cardNameList[z] + " succesfully loaded with "+reloadAmountList[z]);
+                    z++;
                 }
-                z++;
             }
         }
         private static Dictionary<string, string> CreateCarDictionary()
@@ -161,11 +162,7 @@ namespace StarbucksAutomation
                     var row = dataTable.NewRow();
                     row["Card Name"] = "Needs CSC";
                     row["Card Amount"] = entry.Key;
-                    using (StreamWriter sw = File.AppendText(@"C:\" + DateTime.Now.ToString("dd-M-yy_HH-mm-ss") +
-                                  "cardamounts.txt"))
-                    {
-                        sw.WriteLine(entry.Key + " : needs CSC");
-                    }
+                    
                     dataTable.Rows.Add(row);
                 }
                 else
@@ -180,12 +177,12 @@ namespace StarbucksAutomation
                     dataTable.Rows.Add(row);
 
                     //Write to Text
-                    using (StreamWriter sw = File.AppendText(@"C:\" + DateTime.Now.ToString("dd-M-yy_HH-mm-ss") +
+                   /* using (StreamWriter sw = File.AppendText(@"C:\" + DateTime.Now.ToString("dd-M-yy_HH-mm-ss") +
                                   "cardamounts.txt"))
                     {
                         sw.WriteLine(name + " : " + amount);
                     }
-                    //Increment
+                  */  //Increment
                     z++;
                 }
             }
@@ -193,8 +190,13 @@ namespace StarbucksAutomation
 
             ws.InsertDataTable(dataTable,
                 new InsertDataTableOptions("A1") {ColumnHeaders = true});
-            ef.Save(@"C:\" +  DateTime.Now.ToString("dd-M-yy_HH-mm-ss") + "CardAmounts.xls");
-           
+            if (File.Exists(@"C:\Users\btmt0_000\Desktop\Balances\CardAmounts.xls"))
+            {
+                File.Delete(@"C:\Users\btmt0_000\Desktop\Balances\CardAmounts.xls");
+            }
+            //ef.Save(@"C:\Users\btmt0_000\Desktop\Balances\CardAmounts.xls", SaveOptions.XlsDefault);
+            ef.Save(@"C:\CardAmounts.xls", SaveOptions.XlsDefault);
+
         }
 
         private static void LogIn(ChromeDriver driver)
