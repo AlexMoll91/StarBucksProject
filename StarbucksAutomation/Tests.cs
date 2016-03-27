@@ -46,8 +46,8 @@ namespace StarbucksAutomation
             Console.WriteLine(cardNameList.Count);
             //Login
             LogIn(driver);
-            //using (StreamWriter newTask = new StreamWriter(@"C:\Users\btmt0_000\Desktop\Balances\ReloadResults.txt", false))
-            using (StreamWriter newTask = new StreamWriter(@"C:\ReloadResults.txt", false))
+            using (StreamWriter newTask = new StreamWriter(@"C:\Users\btmt0_000\Desktop\Balances\ReloadResults.txt", false))
+            //using (StreamWriter newTask = new StreamWriter(@"C:\ReloadResults.txt", false))
             {
                
 
@@ -194,8 +194,8 @@ namespace StarbucksAutomation
             {
                 File.Delete(@"C:\Users\btmt0_000\Desktop\Balances\CardAmounts.xls");
             }
-            //ef.Save(@"C:\Users\btmt0_000\Desktop\Balances\CardAmounts.xls", SaveOptions.XlsDefault);
-            ef.Save(@"C:\CardAmounts.xls", SaveOptions.XlsDefault);
+            ef.Save(@"C:\Users\btmt0_000\Desktop\Balances\CardAmounts.xls", SaveOptions.XlsDefault);
+            //ef.Save(@"C:\CardAmounts.xls", SaveOptions.XlsDefault);
 
         }
 
