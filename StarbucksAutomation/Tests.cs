@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using GemBox.Spreadsheet;
 using JQSelenium;
+
 using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -29,20 +30,33 @@ namespace StarbucksAutomation
 
 
             //Initialize dictionary -- KEY (Card Name) Value (Url addition)
-           
+            var ws =
+                ExcelFile.Load(@"C:\StarBucksAutomation\StarBucksProject\StarbucksAutomation\Input\reload.xlsx")
+                    .Worksheets.First();
+            ExtractToDataTableOptions options = new ExtractToDataTableOptions(0, 0, ws.Rows.Count);
+            options.ExtractDataOptions = ExtractDataOptions.StopAtFirstEmptyRow;
+
+            var dt = new DataTable();
+            var cells1 = dt.Columns[0].ColumnName = "Card Name";
+            var cells2 = dt.Columns[1].ColumnName = "Card Amount";
+            var cardNameList = dt
+   .AsEnumerable()
+   .Select(row => row.Field<string>("Card Name"))
+   .ToList();
+            var reloadAmountList = dt.AsEnumerable()
+   .Select(row => row.Field<string>("Card Name"))
+   .ToList();
+
+            var cardUrlDict = CreateCarDictionary();
+            
             
 
-                var reloadAmountList = new List<string>();
-            var cardNameList = new List<string>();
-            var cardUrlDict = CreateCarDictionary();
+            
+            
 
-            var reloadDict = File.ReadAllLines(@"C:\StarBucksAutomation\StarBucksProject\StarbucksAutomation\Input\reload.txt").Select(x => x.Split(':')).ToList();
-           
-            foreach (var reload in reloadDict)
-            {
-                cardNameList.Add(reload[0]);
-                reloadAmountList.Add(reload[1]);
-            }
+          
+
+
             Console.WriteLine(cardNameList.Count);
             //Login
             LogIn(driver);
